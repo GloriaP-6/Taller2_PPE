@@ -9,11 +9,14 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "generate-types": "wrangler types"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^14.3.3",
     "@supabase/supabase-js": "^2.117.2",
-    "astro": "^7.3.5"
+    "astro": "^7.3.5",
+    "wrangler": "^4.141.0"
   },
   "allowScripts": {
     "esbuild": true

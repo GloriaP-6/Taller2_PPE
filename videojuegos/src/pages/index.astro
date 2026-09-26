@@ -1,17 +1,67 @@
 ---
+import { supabase } from '../lib/supabase';
 
+const PAGE_SIZE = 6;
+
+const url = Astro.url;
+const q = url.searchParams.get('q') ?? '';
+const page = Number(url.searchParams.get('page') ?? '1');
+
+const from = (page - 1) * PAGE_SIZE;
+const to = from + PAGE_SIZE - 1;
+
+let query = supabase
+  .from('juegos')
+  .select('*', { count: 'exact' })
+  .order('id', { ascending: true })
+  .range(from, to);
+
+if (q) {
+  query = query.ilike('nombre', `%${q}%`);
+}
+
+const { data: juegos, count, error } = await query;
+console.error('Error de Supabase:', error);
+
+const total = count ?? 0;
+const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Catálogo de Videojuegos</title>
+  </head>
+  <body>
+    <h1>Catálogo de Videojuegos</h1>
+
+    <form method="GET" action="/">
+      <input type="text" name="q" placeholder="Buscar por nombre..." value={q} />
+      <button type="submit">Buscar</button>
+    </form>
+
+    {error && <p>Ocurrió un error cargando los juegos.</p>}
+
+    <ul>
+      {juegos?.map((juego) => (
+        <li>
+          <img src={juego.imagen} alt={juego.nombre} width="120" />
+          <h2>{juego.nombre}</h2>
+          <p>{juego.categoria}</p>
+        </li>
+      ))}
+    </ul>
+
+    {juegos?.length === 0 && <p>No se encontraron juegos.</p>}
+
+    <nav>
+      {page > 1 && (
+        <a href={`/?q=${q}&page=${page - 1}`}>← Anterior</a>
+      )}
+      <span> Página {page} de {totalPages} </span>
+      {page < totalPages && (
+        <a href={`/?q=${q}&page=${page + 1}`}>Siguiente →</a>
+      )}
+    </nav>
+  </body>
 </html>
