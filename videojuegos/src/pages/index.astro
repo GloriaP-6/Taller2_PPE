@@ -1,6 +1,14 @@
 ---
 import { supabase } from '../lib/supabase';
 
+// Página estática (SSG). El login real ocurre en el navegador, dentro del script de abajo.
+type Juego = {
+  id: number;
+  nombre: string;
+  imagen: string;
+  categoria: string;
+};
+
 const PAGE_SIZE = 6;
 
 const url = Astro.url;
@@ -20,8 +28,11 @@ if (q) {
   query = query.ilike('nombre', `%${q}%`);
 }
 
-const { data: juegos, count, error } = await query;
-console.error('Error de Supabase:', error);
+const { data, count, error } = await query;
+const juegos = data as Juego[] | null;
+if (error) {
+  console.error('Error de Supabase:', error);
+}
 
 const total = count ?? 0;
 const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
