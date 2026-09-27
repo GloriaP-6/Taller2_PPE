@@ -114,14 +114,9 @@ npm run preview   # Vista previa del build
 ```
 
 ## 🌐 Despliegue
-
-El proyecto puede desplegarse en:
-
-- Vercel
-- Netlify
-- GitHub Pages (según configuración)
+el proyecto se desplega en: 
 - Cloudflare Pages
-
+https://videojuegos.juegosvideo.workers.dev/
 ## 👥 Integrantes
 
 - Gloria Yuliana Peña Ibargüen
