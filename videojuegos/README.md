@@ -1,43 +1,133 @@
-# Astro Starter Kit: Minimal
+# Taller2_PPE
+# 🎮 Videojuegos
 
-```sh
-npm create astro@latest -- --template minimal
-```
+Plataforma web desarrollada con Astro y Supabase para la gestión y visualización de videojuegos.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## 📋 Descripción
 
-## 🚀 Project Structure
+Este proyecto consiste en una aplicación web construida con Astro que permite interactuar con una base de datos alojada en Supabase.
 
-Inside of your Astro project, you'll see the following folders and files:
+## 🚀 Tecnologías Utilizadas
+
+- Astro
+- TypeScript
+- Supabase
+- HTML5
+- CSS3
+- JavaScript
+- Node.js
+
+## 📂 Estructura del Proyecto
 
 ```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+videojuegos/
+│
+├── public/              # Archivos públicos
+├── src/                 # Código fuente
+├── .astro/              # Archivos generados por Astro
+├── .vscode/             # Configuración de VS Code
+├── AGENTS.md
+├── CLAUDE.md
+├── astro.config.mjs
+├── package.json
+├── tsconfig.json
+├── .env
+├── .env.example
+└── README.md
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## ⚙️ Requisitos Previos
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Antes de ejecutar el proyecto, asegúrate de tener instalado:
 
-Any static assets, like images, can be placed in the `public/` directory.
+- Node.js 18 o superior
+- npm 9 o superior
+- Cuenta en Supabase
 
-## 🧞 Commands
+## 🔧 Instalación
 
-All commands are run from the root of the project, from a terminal:
+Clona el repositorio:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+```bash
+git clone <URL_DEL_REPOSITORIO>
+```
 
-## 👀 Want to learn more?
+Ingresa a la carpeta del proyecto:
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+```bash
+cd videojuegos
+```
+
+Instala las dependencias:
+
+```bash
+npm install
+```
+
+## 🔑 Configuración de Supabase
+
+Crea un archivo `.env` tomando como referencia `.env.example`.
+
+Ejemplo:
+
+```env
+PUBLIC_SUPABASE_URL=https://xxxxxxxx.supabase.co
+PUBLIC_SUPABASE_ANON_KEY=tu_clave_anonima
+```
+
+Puedes obtener estos valores desde:
+
+**Supabase → Project Settings → API**
+
+## ▶️ Ejecutar en Desarrollo
+
+```bash
+npm run dev
+```
+
+La aplicación estará disponible en:
+
+```text
+http://localhost:4321
+```
+
+## 🏗️ Construcción para Producción
+
+Generar el build:
+
+```bash
+npm run build
+```
+
+Vista previa local:
+
+```bash
+npm run preview
+```
+
+## 📦 Scripts Disponibles
+
+```bash
+npm run dev       # Ejecuta el servidor de desarrollo
+npm run build     # Genera la versión de producción
+npm run preview   # Vista previa del build
+```
+
+## 🌐 Despliegue
+
+El proyecto puede desplegarse en:
+
+- Vercel
+- Netlify
+- GitHub Pages (según configuración)
+- Cloudflare Pages
+
+## 👥 Integrantes
+
+- Gloria Yuliana Peña Ibargüen
+- Miguel Angel Jaramillo Urtado
+- Luis Guillermo Velez Suarez
+
+## 📄 Licencia
+
+Proyecto académico desarrollado para la asignatura correspondiente.

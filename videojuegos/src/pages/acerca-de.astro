@@ -1,0 +1,67 @@
+---
+// Página 100% estática: se genera en build time, no necesita el servidor.
+export const prerender = true;
+
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+  title="Acerca de"
+  description="Información sobre el proyecto Videojuegos: tecnologías usadas e integrantes del equipo."
+>
+  <section>
+    <h1>Acerca de este proyecto</h1>
+    <p>
+      <strong>Videojuegos</strong> es una plataforma web desarrollada con Astro y
+      Supabase para la gestión y visualización de un catálogo de videojuegos.
+      El sitio combina páginas renderizadas en el servidor (para datos que
+      cambian, como la búsqueda en el catálogo) con páginas estáticas como
+      esta, para un rendimiento óptimo.
+    </p>
+  </section>
+
+  <section>
+    <h2>Tecnologías utilizadas</h2>
+    <ul class="tech-list">
+      <li>Astro</li>
+      <li>TypeScript</li>
+      <li>Supabase</li>
+      <li>HTML5</li>
+      <li>CSS3</li>
+      <li>JavaScript</li>
+      <li>Node.js</li>
+      <li>Cloudflare Workers (despliegue)</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Integrantes</h2>
+    <ul>
+      <li>Gloria Yuliana Peña Ibargüen</li>
+      <li>Miguel Angel Jaramillo Urtado</li>
+      <li>Luis Guillermo Velez Suarez</li>
+    </ul>
+  </section>
+</Layout>
+
+<style>
+  section {
+    margin-bottom: 2rem;
+  }
+
+  .tech-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+  }
+
+  .tech-list li {
+    background: var(--color-surface-2, #1f232c);
+    border: 1px solid var(--color-border, #2a2f3a);
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+  }
+</style>

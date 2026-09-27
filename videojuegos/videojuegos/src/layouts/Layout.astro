@@ -1,0 +1,251 @@
+---
+import { ClientRouter } from 'astro:transitions';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'Catálogo de videojuegos construido con Astro y Supabase.',
+} = Astro.props;
+
+const siteName = 'Videojuegos';
+const pageTitle = title ? `${title} | ${siteName}` : siteName;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="generator" content={Astro.generator} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Título dinámico por página -->
+    <title>{pageTitle}</title>
+
+    <!-- Habilita View Transitions / navegación SPA-like en todo el sitio -->
+    <ClientRouter />
+  </head>
+  <body>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <nav class="site-nav" aria-label="Navegación principal">
+        <a href="/" class="brand">🕹 {siteName}</a>
+        <ul>
+          <li><a href="/">Catálogo</a></li>
+          <li><a href="/acerca-de">Acerca de</a></li>
+          <li><a href="/login" id="nav-login">Iniciar sesión</a></li>
+          <li><a href="/admin" id="nav-admin" hidden>Administrar</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="site-main" transition:animate="fade">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <p>{new Date().getFullYear()} {siteName} — proyecto académico con Astro y Supabase</p>
+    </footer>
+
+    <script>
+      import { supabase } from '../lib/supabase';
+
+      async function actualizarMenu() {
+        const { data: { session } } = await supabase.auth.getSession();
+        const loginLink = document.querySelector<HTMLAnchorElement>('#nav-login');
+        const adminLink = document.querySelector<HTMLAnchorElement>('#nav-admin');
+        if (!loginLink || !adminLink) return;
+
+        loginLink.hidden = !!session;
+        adminLink.hidden = !session;
+      }
+
+      actualizarMenu();
+      // Con View Transitions, Astro dispara este evento en cada navegación SPA-like.
+      document.addEventListener('astro:page-load', actualizarMenu);
+    </script>
+
+    <style is:global>
+      :root {
+        --color-bg: #12121c;
+        --color-surface: #1b1b2b;
+        --color-surface-2: #242438;
+        --color-border: #33334d;
+        --color-text: #f1f1f6;
+        --color-text-muted: #9494b3;
+        --color-primary: #ffb703;
+        --color-primary-hover: #ffc93c;
+        --color-primary-text: #12121c;
+        --color-accent-2: #06d6a0;
+        --font-display: 'Press Start 2P', monospace;
+        --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        --radius: 8px;
+        --max-width: 1080px;
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-family: var(--font-body);
+        line-height: 1.5;
+      }
+
+      .scanlines {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 999;
+        background: repeating-linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.025) 0px,
+          rgba(255, 255, 255, 0.025) 1px,
+          transparent 1px,
+          transparent 3px
+        );
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      a {
+        color: inherit;
+      }
+
+      a:focus-visible,
+      button:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+      }
+
+      img {
+        max-width: 100%;
+        display: block;
+      }
+
+      h1 {
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: clamp(1.1rem, 3.4vw, 1.6rem);
+        line-height: 1.6;
+        margin: 0 0 1.5rem;
+      }
+
+      h2 {
+        font-size: 1.15rem;
+        margin: 0 0 0.75rem;
+      }
+
+      button {
+        font-family: var(--font-body);
+      }
+
+      button[type='submit'],
+      #guardar-btn,
+      #logout-btn {
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 0.85rem;
+      }
+
+      .site-header {
+        border-bottom: 1px solid var(--color-border);
+        background: var(--color-surface);
+        position: relative;
+        z-index: 1;
+      }
+
+      .site-nav {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .site-nav .brand {
+        font-family: var(--font-display);
+        font-size: 0.75rem;
+        color: var(--color-primary);
+        text-decoration: none;
+        letter-spacing: 0.02em;
+      }
+
+      .site-nav ul {
+        list-style: none;
+        display: flex;
+        gap: 1.25rem;
+        margin: 0;
+        padding: 0;
+      }
+
+      .site-nav a {
+        text-decoration: none;
+        color: var(--color-text-muted);
+        font-weight: 500;
+        font-size: 0.9rem;
+      }
+
+      .site-nav a:hover {
+        color: var(--color-text);
+      }
+
+      .site-main {
+        flex: 1;
+        width: 100%;
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem;
+        position: relative;
+        z-index: 1;
+      }
+
+      .site-footer {
+        border-top: 1px solid var(--color-border);
+        padding: 1.25rem 1.5rem;
+        text-align: center;
+        color: var(--color-text-muted);
+        font-size: 0.8rem;
+        position: relative;
+        z-index: 1;
+      }
+    </style>
+  </body>
+</html>
+

@@ -1,7 +1,9 @@
 ---
+import Layout from '../layouts/Layout.astro';
+import GameCard from '../components/GameCard.astro';
+import SearchForm from '../components/SearchForm.astro';
 import { supabase } from '../lib/supabase';
 
-// Página estática (SSG). El login real ocurre en el navegador, dentro del script de abajo.
 type Juego = {
   id: number;
   nombre: string;
@@ -38,41 +40,51 @@ const total = count ?? 0;
 const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 ---
 
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Catálogo de Videojuegos</title>
-  </head>
-  <body>
-    <h1>Catálogo de Videojuegos</h1>
+<Layout title="Catálogo" description="Explora el catálogo de videojuegos.">
+  <h1>Catálogo de Videojuegos</h1>
 
-    <form method="GET" action="/">
-      <input type="text" name="q" placeholder="Buscar por nombre..." value={q} />
-      <button type="submit">Buscar</button>
-    </form>
+  <SearchForm action="/" value={q} placeholder="Buscar por nombre..." />
 
-    {error && <p>Ocurrió un error cargando los juegos.</p>}
+  {error && <p>Ocurrió un error cargando los juegos.</p>}
 
-    <ul>
-      {juegos?.map((juego) => (
-        <li>
-          <img src={juego.imagen} alt={juego.nombre} width="120" />
-          <h2>{juego.nombre}</h2>
-          <p>{juego.categoria}</p>
-        </li>
-      ))}
-    </ul>
+  <div class="game-grid">
+    {juegos?.map((juego) => (
+      <GameCard nombre={juego.nombre} categoria={juego.categoria} imagen={juego.imagen} />
+    ))}
+  </div>
 
-    {juegos?.length === 0 && <p>No se encontraron juegos.</p>}
+  {juegos?.length === 0 && <p>No se encontraron juegos.</p>}
 
-    <nav>
-      {page > 1 && (
-        <a href={`/?q=${q}&page=${page - 1}`}>← Anterior</a>
-      )}
-      <span> Página {page} de {totalPages} </span>
-      {page < totalPages && (
-        <a href={`/?q=${q}&page=${page + 1}`}>Siguiente →</a>
-      )}
-    </nav>
-  </body>
-</html>
+  <nav class="pagination" aria-label="Paginación de resultados">
+    {page > 1 && (
+      <a href={`/?q=${encodeURIComponent(q)}&page=${page - 1}`}>← Anterior</a>
+    )}
+    <span>Página {page} de {totalPages}</span>
+    {page < totalPages && (
+      <a href={`/?q=${encodeURIComponent(q)}&page=${page + 1}`}>Siguiente →</a>
+    )}
+  </nav>
+</Layout>
+
+<style>
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+    color: var(--color-text-muted, #9aa1af);
+  }
+
+  .pagination a {
+    text-decoration: none;
+    color: var(--color-primary, #6c5ce7);
+    font-weight: 600;
+  }
+</style>
