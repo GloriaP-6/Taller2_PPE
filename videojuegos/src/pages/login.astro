@@ -1,6 +1,5 @@
 ---
-// Página estática (SSG): se genera una sola vez en el build.
-// El login real ocurre en el navegador (ver <script> abajo), no aquí en el frontmatter.
+// Página estática (SSG). El login real ocurre en el navegador, dentro del script de abajo.
 export const prerender = true;
 
 import Layout from '../layouts/Layout.astro';
@@ -32,31 +31,45 @@ import Layout from '../layouts/Layout.astro';
   <script>
     import { supabase } from '../lib/supabase';
 
-    const form = document.querySelector<HTMLFormElement>('#login-form')!;
-    const errorEl = document.querySelector<HTMLParagraphElement>('#error')!;
-    const submitBtn = document.querySelector<HTMLButtonElement>('#submit-btn')!;
+    // Con <ClientRouter /> este script se carga una sola vez, pero la página
+    // puede mostrarse muchas veces. Por eso todo va dentro de una función que
+    // se ejecuta en cada "astro:page-load" (incluida la carga inicial).
+    function iniciarLogin() {
+      const form = document.querySelector<HTMLFormElement>('#login-form');
+      if (!form) return; // esta página no es la que se está mostrando
 
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      errorEl.textContent = '';
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Entrando...';
+      const errorEl = document.querySelector<HTMLParagraphElement>('#error')!;
+      const submitBtn = document.querySelector<HTMLButtonElement>('#submit-btn')!;
 
-      const email = (form.elements.namedItem('email') as HTMLInputElement).value;
-      const password = (form.elements.namedItem('password') as HTMLInputElement).value;
+      // Si ya hay sesión activa, no tiene sentido mostrar el login.
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) window.location.href = '/admin';
+      });
 
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        errorEl.textContent = '';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Entrando...';
 
-      if (error) {
-        errorEl.textContent = 'Correo o contraseña incorrectos.';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Entrar';
-        return;
-      }
+        const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+        const password = (form.elements.namedItem('password') as HTMLInputElement).value;
 
-      // Sesión guardada por supabase-js (localStorage). Redirigimos al panel protegido.
-      window.location.href = '/admin';
-    });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error) {
+          errorEl.textContent = 'Correo o contraseña incorrectos.';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Entrar';
+          return;
+        }
+
+        // Sesión guardada por supabase-js (localStorage). Redirigimos al panel protegido.
+        window.location.href = '/admin';
+      });
+    }
+
+    document.addEventListener('astro:page-load', iniciarLogin);
   </script>
 </Layout>
 

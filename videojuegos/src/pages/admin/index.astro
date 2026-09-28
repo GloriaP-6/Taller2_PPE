@@ -53,160 +53,186 @@ import Layout from '../../layouts/Layout.astro';
     import { supabase } from '../../lib/supabase';
     import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
-    const cargandoEl = document.querySelector<HTMLParagraphElement>('#cargando')!;
-    const panelEl = document.querySelector<HTMLDivElement>('#panel')!;
-    const listaEl = document.querySelector<HTMLUListElement>('#lista-juegos')!;
-    const listaErrorEl = document.querySelector<HTMLParagraphElement>('#lista-error')!;
-
-    const form = document.querySelector<HTMLFormElement>('#juego-form')!;
-    const idInput = document.querySelector<HTMLInputElement>('#juego-id')!;
-    const nombreInput = document.querySelector<HTMLInputElement>('#nombre')!;
-    const imagenInput = document.querySelector<HTMLInputElement>('#imagen')!;
-    const categoriaInput = document.querySelector<HTMLInputElement>('#categoria')!;
-    const formTitle = document.querySelector<HTMLHeadingElement>('#form-title')!;
-    const formErrorEl = document.querySelector<HTMLParagraphElement>('#form-error')!;
-    const guardarBtn = document.querySelector<HTMLButtonElement>('#guardar-btn')!;
-    const cancelarBtn = document.querySelector<HTMLButtonElement>('#cancelar-edicion-btn')!;
-    const logoutBtn = document.querySelector<HTMLButtonElement>('#logout-btn')!;
-
     type Juego = { id: number; nombre: string; imagen: string; categoria: string };
 
-    // --- 1. Verificar sesión antes de mostrar nada -------------------
-    async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
+    // El listener de sesión se registra una sola vez para toda la app.
+    let listenerSesionRegistrado = false;
 
-      if (!session) {
-        window.location.href = '/login';
-        return;
+    // Con <ClientRouter /> este script se carga una sola vez, pero la página
+    // puede mostrarse muchas veces. Por eso todo va dentro de una función que
+    // se ejecuta en cada "astro:page-load" (incluida la carga inicial).
+    function iniciarAdmin() {
+      const panelEl = document.querySelector<HTMLDivElement>('#panel');
+      if (!panelEl) return; // esta página no es la que se está mostrando
+
+      const cargandoEl = document.querySelector<HTMLParagraphElement>('#cargando')!;
+      const listaEl = document.querySelector<HTMLUListElement>('#lista-juegos')!;
+      const listaErrorEl = document.querySelector<HTMLParagraphElement>('#lista-error')!;
+
+      const form = document.querySelector<HTMLFormElement>('#juego-form')!;
+      const idInput = document.querySelector<HTMLInputElement>('#juego-id')!;
+      const nombreInput = document.querySelector<HTMLInputElement>('#nombre')!;
+      const imagenInput = document.querySelector<HTMLInputElement>('#imagen')!;
+      const categoriaInput = document.querySelector<HTMLInputElement>('#categoria')!;
+      const formTitle = document.querySelector<HTMLHeadingElement>('#form-title')!;
+      const formErrorEl = document.querySelector<HTMLParagraphElement>('#form-error')!;
+      const guardarBtn = document.querySelector<HTMLButtonElement>('#guardar-btn')!;
+      const cancelarBtn = document.querySelector<HTMLButtonElement>('#cancelar-edicion-btn')!;
+      const logoutBtn = document.querySelector<HTMLButtonElement>('#logout-btn')!;
+
+      // --- 1. Verificar sesión antes de mostrar nada -------------------
+      async function init() {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+          window.location.href = '/login';
+          return;
+        }
+
+        cargandoEl.hidden = true;
+        panelEl!.hidden = false;
+        await cargarJuegos();
       }
 
-      cargandoEl.hidden = true;
-      panelEl.hidden = false;
-      await cargarJuegos();
-    }
-
-    // Si la sesión cambia en otra pestaña (ej. cierre de sesión), reacciona aquí también.
-    supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
-      if (!session) window.location.href = '/login';
-    });
-
-    // --- 2. Listar juegos ---------------------------------------------
-    async function cargarJuegos() {
-      listaErrorEl.textContent = '';
-      const { data, error } = await supabase
-        .from('juegos')
-        .select('*')
-        .order('id', { ascending: true });
-
-      if (error) {
-        listaErrorEl.textContent = 'No se pudieron cargar los juegos.';
-        return;
-      }
-
-      renderLista(data as Juego[]);
-    }
-
-    function renderLista(juegos: Juego[]) {
-      listaEl.innerHTML = '';
-
-      if (juegos.length === 0) {
-        listaEl.innerHTML = '<li>Todavía no hay juegos.</li>';
-        return;
-      }
-
-      for (const juego of juegos) {
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <img src="${juego.imagen}" alt="${juego.nombre}" width="80" />
-          <strong>${juego.nombre}</strong> — ${juego.categoria}
-          <button type="button" data-accion="editar" data-id="${juego.id}">Editar</button>
-          <button type="button" data-accion="eliminar" data-id="${juego.id}">Eliminar</button>
-        `;
-        listaEl.appendChild(li);
-      }
-
-      listaEl.querySelectorAll<HTMLButtonElement>('[data-accion="editar"]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const juego = juegos.find((j) => j.id === Number(btn.dataset.id));
-          if (juego) entrarModoEdicion(juego);
+      // Si la sesión se cierra (por ejemplo en otra pestaña), sacamos al usuario del panel.
+      if (!listenerSesionRegistrado) {
+        listenerSesionRegistrado = true;
+        supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
+          if (!session && document.querySelector('#panel')) {
+            window.location.href = '/login';
+          }
         });
-      });
-
-      listaEl.querySelectorAll<HTMLButtonElement>('[data-accion="eliminar"]').forEach((btn) => {
-        btn.addEventListener('click', () => eliminarJuego(Number(btn.dataset.id)));
-      });
-    }
-
-    // --- 3. Editar (precargar el formulario) ---------------------------
-    function entrarModoEdicion(juego: Juego) {
-      idInput.value = String(juego.id);
-      nombreInput.value = juego.nombre;
-      imagenInput.value = juego.imagen;
-      categoriaInput.value = juego.categoria;
-      formTitle.textContent = `Editando: ${juego.nombre}`;
-      guardarBtn.textContent = 'Guardar cambios';
-      cancelarBtn.hidden = false;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function salirModoEdicion() {
-      idInput.value = '';
-      form.reset();
-      formTitle.textContent = 'Nuevo juego';
-      guardarBtn.textContent = 'Guardar';
-      cancelarBtn.hidden = true;
-    }
-
-    cancelarBtn.addEventListener('click', salirModoEdicion);
-
-    // --- 4. Crear o actualizar (según si hay id) ------------------------
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      formErrorEl.textContent = '';
-      guardarBtn.disabled = true;
-
-      const payload = {
-        nombre: nombreInput.value.trim(),
-        imagen: imagenInput.value.trim(),
-        categoria: categoriaInput.value.trim(),
-      };
-
-      const editandoId = idInput.value;
-      const { error } = editandoId
-        ? await supabase.from('juegos').update(payload).eq('id', editandoId)
-        : await supabase.from('juegos').insert(payload);
-
-      guardarBtn.disabled = false;
-
-      if (error) {
-        // Si las políticas RLS no están bien configuradas, este es el error que vas a ver.
-        formErrorEl.textContent = 'No se pudo guardar: ' + error.message;
-        return;
       }
 
-      salirModoEdicion();
-      await cargarJuegos();
-    });
+      // --- 2. Listar juegos ---------------------------------------------
+      async function cargarJuegos() {
+        listaErrorEl.textContent = '';
+        const { data, error } = await supabase
+          .from('juegos')
+          .select('*')
+          .order('id', { ascending: true });
 
-    // --- 5. Eliminar ------------------------------------------------------
-    async function eliminarJuego(id: number) {
-      if (!confirm('¿Eliminar este juego? Esta acción no se puede deshacer.')) return;
+        if (error) {
+          listaErrorEl.textContent = 'No se pudieron cargar los juegos.';
+          return;
+        }
 
-      const { error } = await supabase.from('juegos').delete().eq('id', id);
-      if (error) {
-        listaErrorEl.textContent = 'No se pudo eliminar: ' + error.message;
-        return;
+        renderLista(data as Juego[]);
       }
-      await cargarJuegos();
+
+      // Se construye con createElement + textContent (no con innerHTML) para
+      // que un nombre o categoría con HTML no se ejecute como código (XSS).
+      function renderLista(juegos: Juego[]) {
+        listaEl.replaceChildren();
+
+        if (juegos.length === 0) {
+          const vacio = document.createElement('li');
+          vacio.textContent = 'Todavía no hay juegos.';
+          listaEl.appendChild(vacio);
+          return;
+        }
+
+        for (const juego of juegos) {
+          const li = document.createElement('li');
+
+          const img = document.createElement('img');
+          img.src = juego.imagen;
+          img.alt = juego.nombre;
+          img.width = 80;
+
+          const info = document.createElement('span');
+          const nombre = document.createElement('strong');
+          nombre.textContent = juego.nombre;
+          info.append(nombre, ` — ${juego.categoria}`);
+
+          const editarBtn = document.createElement('button');
+          editarBtn.type = 'button';
+          editarBtn.textContent = 'Editar';
+          editarBtn.addEventListener('click', () => entrarModoEdicion(juego));
+
+          const eliminarBtn = document.createElement('button');
+          eliminarBtn.type = 'button';
+          eliminarBtn.textContent = 'Eliminar';
+          eliminarBtn.addEventListener('click', () => eliminarJuego(juego.id));
+
+          li.append(img, info, editarBtn, eliminarBtn);
+          listaEl.appendChild(li);
+        }
+      }
+
+      // --- 3. Editar (precargar el formulario) ---------------------------
+      function entrarModoEdicion(juego: Juego) {
+        idInput.value = String(juego.id);
+        nombreInput.value = juego.nombre;
+        imagenInput.value = juego.imagen;
+        categoriaInput.value = juego.categoria;
+        formTitle.textContent = `Editando: ${juego.nombre}`;
+        guardarBtn.textContent = 'Guardar cambios';
+        cancelarBtn.hidden = false;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function salirModoEdicion() {
+        idInput.value = '';
+        form.reset();
+        formTitle.textContent = 'Nuevo juego';
+        guardarBtn.textContent = 'Guardar';
+        cancelarBtn.hidden = true;
+      }
+
+      cancelarBtn.addEventListener('click', salirModoEdicion);
+
+      // --- 4. Crear o actualizar (según si hay id) ------------------------
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        formErrorEl.textContent = '';
+        guardarBtn.disabled = true;
+
+        const payload = {
+          nombre: nombreInput.value.trim(),
+          imagen: imagenInput.value.trim(),
+          categoria: categoriaInput.value.trim(),
+        };
+
+        const editandoId = idInput.value;
+        const { error } = editandoId
+          ? await supabase.from('juegos').update(payload).eq('id', editandoId)
+          : await supabase.from('juegos').insert(payload);
+
+        guardarBtn.disabled = false;
+
+        if (error) {
+          // Si las políticas RLS no están bien configuradas, este es el error que vas a ver.
+          formErrorEl.textContent = 'No se pudo guardar: ' + error.message;
+          return;
+        }
+
+        salirModoEdicion();
+        await cargarJuegos();
+      });
+
+      // --- 5. Eliminar ------------------------------------------------------
+      async function eliminarJuego(id: number) {
+        if (!confirm('¿Eliminar este juego? Esta acción no se puede deshacer.')) return;
+
+        const { error } = await supabase.from('juegos').delete().eq('id', id);
+        if (error) {
+          listaErrorEl.textContent = 'No se pudo eliminar: ' + error.message;
+          return;
+        }
+        await cargarJuegos();
+      }
+
+      // --- 6. Logout ----------------------------------------------------------
+      logoutBtn.addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/';
+      });
+
+      init();
     }
 
-    // --- 6. Logout ----------------------------------------------------------
-    logoutBtn.addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      window.location.href = '/';
-    });
-
-    init();
+    document.addEventListener('astro:page-load', iniciarAdmin);
   </script>
 
   <style>

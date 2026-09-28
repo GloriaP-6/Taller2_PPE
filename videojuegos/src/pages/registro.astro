@@ -1,4 +1,5 @@
 ---
+// Página estática (SSG). El registro real ocurre en el navegador, dentro del script de abajo.
 export const prerender = true;
 
 import Layout from '../layouts/Layout.astro';
@@ -31,41 +32,55 @@ import Layout from '../layouts/Layout.astro';
   <script>
     import { supabase } from '../lib/supabase';
 
-    const form = document.querySelector<HTMLFormElement>('#registro-form')!;
-    const errorEl = document.querySelector<HTMLParagraphElement>('#error')!;
-    const exitoEl = document.querySelector<HTMLParagraphElement>('#exito')!;
-    const submitBtn = document.querySelector<HTMLButtonElement>('#submit-btn')!;
+    // Con <ClientRouter /> este script se carga una sola vez, pero la página
+    // puede mostrarse muchas veces. Por eso todo va dentro de una función que
+    // se ejecuta en cada "astro:page-load" (incluida la carga inicial).
+    function iniciarRegistro() {
+      const form = document.querySelector<HTMLFormElement>('#registro-form');
+      if (!form) return; // esta página no es la que se está mostrando
 
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      errorEl.textContent = '';
-      exitoEl.textContent = '';
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Creando...';
+      const errorEl = document.querySelector<HTMLParagraphElement>('#error')!;
+      const exitoEl = document.querySelector<HTMLParagraphElement>('#exito')!;
+      const submitBtn = document.querySelector<HTMLButtonElement>('#submit-btn')!;
 
-      const email = (form.elements.namedItem('email') as HTMLInputElement).value;
-      const password = (form.elements.namedItem('password') as HTMLInputElement).value;
+      // Si ya hay sesión activa, no tiene sentido mostrar el registro.
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) window.location.href = '/admin';
+      });
 
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        errorEl.textContent = '';
+        exitoEl.textContent = '';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creando...';
 
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Crear cuenta';
+        const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+        const password = (form.elements.namedItem('password') as HTMLInputElement).value;
 
-      if (error) {
-        errorEl.textContent = 'No se pudo crear la cuenta: ' + error.message;
-        return;
-      }
+        const { data, error } = await supabase.auth.signUp({ email, password });
 
-      // Si Supabase pide confirmar el correo, no llega sesión todavía.
-      if (!data.session) {
-        exitoEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla antes de iniciar sesión.';
-        form.reset();
-        return;
-      }
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Crear cuenta';
 
-      // Si la confirmación de correo está desactivada, ya queda logueado.
-      window.location.href = '/admin';
-    });
+        if (error) {
+          errorEl.textContent = 'No se pudo crear la cuenta: ' + error.message;
+          return;
+        }
+
+        // Si Supabase pide confirmar el correo, no llega sesión todavía.
+        if (!data.session) {
+          exitoEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla antes de iniciar sesión.';
+          form.reset();
+          return;
+        }
+
+        // Si la confirmación de correo está desactivada, ya queda logueado.
+        window.location.href = '/admin';
+      });
+    }
+
+    document.addEventListener('astro:page-load', iniciarRegistro);
   </script>
 </Layout>
 
