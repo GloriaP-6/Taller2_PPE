@@ -122,6 +122,10 @@ npm run preview   # Vista previa del build
 npm run deploy    # Build + despliegue en Cloudflare
 ```
 
+## 🌐 Despliegue
+el proyecto se desplega en: 
+- Cloudflare Pages
+https://videojuegos.willy-videojuegos.workers.dev/
 ## 👥 Integrantes
 
 - Gloria Yuliana Peña Ibargüen
