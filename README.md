@@ -3,7 +3,7 @@
 
 Plataforma web desarrollada con Astro y Supabase para la gestión y visualización de videojuegos, desplegada en Cloudflare Workers.
 
-🌐 **URL pública:** `PEGAR_AQUÍ_LA_URL_DE_CLOUDFLARE` (por ejemplo `https://videojuegos.<tu-subdominio>.workers.dev`)
+🌐 **URL pública:** `https://videojuegos.willy-videojuegos.workers.dev/` 
 
 ## 📋 Descripción
 
